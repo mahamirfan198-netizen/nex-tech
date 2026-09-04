@@ -1,0 +1,3226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXORA TECH — 3D Premium E-Commerce</title>
+
+    <!-- Three.js for 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0c12;
+            color: #eef2f6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0c12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b6eff, #7a4cff);
+            border-radius: 10px;
+        }
+
+        /* ===== VIDEO BACKGROUND ===== */
+        #video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            opacity: 0.3;
+        }
+        #video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at center, rgba(10, 12, 18, 0.7), rgba(10, 12, 18, 0.9));
+        }
+
+        /* ===== 3D CANVAS ===== */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content-overlay {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+
+        /* ===== GLASS NAV ===== */
+        nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 1280px;
+            padding: 16px 32px;
+            background: rgba(10, 12, 18, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 110, 255, 0.2);
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+            transition: 0.3s ease;
+        }
+        nav.scrolled {
+            top: 0;
+            border-radius: 0 0 30px 30px;
+            width: 100%;
+            max-width: 100%;
+            background: rgba(10, 12, 18, 0.92);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6a9aff, #b47cff, #6a9aff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+            letter-spacing: -0.5px;
+            cursor: pointer;
+        }
+        @keyframes shimmer {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+        .logo small {
+            font-weight: 400;
+            font-size: 0.7rem;
+            -webkit-text-fill-color: #8a9bb8;
+            background: none;
+            letter-spacing: 2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            color: #b0caf5;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b6eff, #7a4cff);
+            transition: 0.3s;
+        }
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        .nav-links a:hover {
+            color: #eef2f6;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-actions .btn {
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s ease;
+            background: transparent;
+            color: #eef2f6;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b6eff, #7a4cff) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 20px rgba(59, 110, 255, 0.3);
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(59, 110, 255, 0.5);
+        }
+        .btn-outline {
+            border: 1.5px solid rgba(59, 110, 255, 0.3) !important;
+        }
+        .btn-outline:hover {
+            border-color: #3b6eff !important;
+            background: rgba(59, 110, 255, 0.1);
+        }
+        .btn-danger {
+            background: #b33a4a !important;
+            color: #fff !important;
+        }
+        .btn-danger:hover {
+            background: #d14a5a !important;
+        }
+        .btn-success {
+            background: #2a8f6a !important;
+            color: #fff !important;
+        }
+        .btn-success:hover {
+            background: #34a87a !important;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .cart-icon:hover {
+            transform: scale(1.1);
+        }
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -12px;
+            background: linear-gradient(135deg, #3b6eff, #7a4cff);
+            color: #fff;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(59, 110, 255, 0.4);
+        }
+
+        /* ===== HERO ===== */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 60px;
+            position: relative;
+        }
+        .hero-content {
+            max-width: 800px;
+            animation: fadeUp 1.5s ease-out;
+        }
+        .hero-content h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #eef2f6 30%, #8ab4f8 80%, #b47cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 60px rgba(59, 110, 255, 0.2);
+        }
+        .hero-content p {
+            font-size: 1.3rem;
+            color: #b0caf5;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-badges {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+        .hero-badges span {
+            background: rgba(59, 110, 255, 0.12);
+            border: 1px solid rgba(59, 110, 255, 0.2);
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            color: #8ab4f8;
+            backdrop-filter: blur(8px);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== SECTIONS ===== */
+        section {
+            padding: 80px 24px;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #eef2f6, #8ab4f8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        .section-title span {
+            background: none;
+            -webkit-text-fill-color: #8ab4f8;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* ===== GLASS CARDS ===== */
+        .glass-card {
+            background: rgba(16, 20, 30, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(59, 110, 255, 0.12);
+            border-radius: 24px;
+            padding: 24px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(59, 110, 255, 0.05), transparent 70%);
+            pointer-events: none;
+        }
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            border-color: rgba(59, 110, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 110, 255, 0.05);
+        }
+        .glass-card img {
+            width: 100%;
+            border-radius: 16px;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            background: #0f131a;
+            transition: 0.4s;
+        }
+        .glass-card:hover img {
+            transform: scale(1.02);
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 28px;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+
+        .product-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #8ab4f8;
+        }
+        .product-old-price {
+            font-size: 0.9rem;
+            color: #6a7a90;
+            text-decoration: line-through;
+            margin-left: 8px;
+        }
+        .product-rating {
+            color: #f4b942;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            background: rgba(59, 110, 255, 0.15);
+            color: #8ab4f8;
+        }
+        .badge-sale {
+            background: linear-gradient(135deg, #b33a4a, #d14a5a);
+            color: #fff;
+        }
+        .badge-stock {
+            background: rgba(42, 143, 106, 0.2);
+            color: #4cd9a0;
+        }
+        .badge-out {
+            background: rgba(179, 58, 74, 0.2);
+            color: #d14a5a;
+        }
+        .badge-bestseller {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+        .badge-new {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: #fff;
+        }
+
+        /* ===== FORMS ===== */
+        .form-glass {
+            background: rgba(16, 20, 30, 0.5);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(59, 110, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .form-glass input,
+        .form-glass select,
+        .form-glass textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(59, 110, 255, 0.15);
+            background: rgba(10, 12, 18, 0.6);
+            color: #eef2f6;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+        .form-glass input:focus,
+        .form-glass select:focus,
+        .form-glass textarea:focus {
+            outline: none;
+            border-color: #3b6eff;
+            box-shadow: 0 0 0 3px rgba(59, 110, 255, 0.15);
+        }
+        .form-glass label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #b0caf5;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        /* ===== CHATBOT ===== */
+        .chatbot-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+        }
+        .chatbot-toggle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b6eff, #7a4cff);
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 8px 40px rgba(59, 110, 255, 0.4);
+            transition: 0.4s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+        .chatbot-toggle:hover {
+            transform: scale(1.1) rotate(-10deg);
+        }
+
+        .chatbot-window {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 380px;
+            max-height: 500px;
+            background: rgba(16, 20, 30, 0.92);
+            backdrop-filter: blur(24px);
+            border-radius: 24px;
+            border: 1px solid rgba(59, 110, 255, 0.15);
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 9999;
+        }
+        .chatbot-window.open {
+            display: flex;
+            animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .chatbot-header {
+            padding: 16px 20px;
+            background: rgba(59, 110, 255, 0.1);
+            border-bottom: 1px solid rgba(59, 110, 255, 0.1);
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chatbot-header .status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4cd9a0;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+        .chatbot-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            max-height: 320px;
+            min-height: 200px;
+        }
+        .chatbot-messages .msg {
+            margin-bottom: 10px;
+            padding: 10px 16px;
+            border-radius: 16px;
+            max-width: 88%;
+            animation: fadeUp 0.3s ease;
+        }
+        .chatbot-messages .user {
+            background: linear-gradient(135deg, #3b6eff, #7a4cff);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .chatbot-messages .bot {
+            background: rgba(59, 110, 255, 0.08);
+            border: 1px solid rgba(59, 110, 255, 0.1);
+            border-bottom-left-radius: 4px;
+        }
+        .chatbot-input {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            border-top: 1px solid rgba(59, 110, 255, 0.1);
+        }
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 40px;
+            border: 1px solid rgba(59, 110, 255, 0.15);
+            background: rgba(10, 12, 18, 0.6);
+            color: #eef2f6;
+        }
+        .chatbot-input button {
+            background: linear-gradient(135deg, #3b6eff, #7a4cff);
+            border: none;
+            color: #fff;
+            border-radius: 40px;
+            padding: 0 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .chatbot-input button:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== ADMIN ===== */
+        .admin-panel {
+            background: rgba(16, 20, 30, 0.5);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(59, 110, 255, 0.1);
+            border-radius: 24px;
+            padding: 28px;
+        }
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .admin-stat {
+            background: rgba(10, 12, 18, 0.6);
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(59, 110, 255, 0.08);
+            text-align: center;
+        }
+        .admin-stat .number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8ab4f8, #b47cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .admin-stat .label {
+            font-size: 0.85rem;
+            color: #8a9bb8;
+            margin-top: 4px;
+        }
+
+        /* ===== TOAST ===== */
+        .toast-notification {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(16, 20, 30, 0.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 110, 255, 0.2);
+            border-radius: 16px;
+            padding: 16px 32px;
+            color: #eef2f6;
+            font-weight: 600;
+            z-index: 99999;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: fadeUp 0.4s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        /* ===== LOADING ===== */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 110, 255, 0.1);
+            border-top: 3px solid #3b6eff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            nav {
+                padding: 12px 20px;
+                border-radius: 30px;
+                width: 96%;
+                top: 10px;
+            }
+            .nav-links {
+                gap: 14px;
+            }
+            .hero-content h1 {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 10px;
+                border-radius: 20px;
+                padding: 12px 16px;
+                top: 8px;
+                width: 95%;
+            }
+            .nav-links {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+            }
+            .nav-links a {
+                font-size: 0.8rem;
+                padding: 4px 8px;
+            }
+            .nav-actions {
+                width: 100%;
+                justify-content: center;
+                gap: 8px;
+            }
+            .nav-actions .btn {
+                padding: 6px 14px;
+                font-size: 0.75rem;
+            }
+            .logo {
+                font-size: 1.4rem;
+            }
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+            .hero-content p {
+                font-size: 1rem;
+            }
+            .hero-badges span {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+            }
+            .section-title {
+                font-size: 2rem;
+            }
+            .grid-3 {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+            }
+            .grid-4 {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 16px;
+            }
+            .chatbot-window {
+                width: 300px;
+                right: 16px;
+                bottom: 90px;
+            }
+            .form-glass {
+                padding: 20px;
+                margin: 0 12px;
+            }
+            section {
+                padding: 60px 16px;
+            }
+            .admin-stats {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            .admin-stat .number {
+                font-size: 1.5rem;
+            }
+            .cart-icon {
+                font-size: 1.2rem;
+            }
+            .cart-count {
+                width: 18px;
+                height: 18px;
+                font-size: 0.6rem;
+                top: -6px;
+                right: -10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                padding: 10px 12px;
+                border-radius: 16px;
+                top: 6px;
+                width: 98%;
+            }
+            .nav-links a {
+                font-size: 0.7rem;
+                padding: 3px 6px;
+            }
+            .nav-actions .btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+            .logo {
+                font-size: 1.2rem;
+            }
+            .logo small {
+                font-size: 0.6rem;
+            }
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
+            .hero-content p {
+                font-size: 0.9rem;
+            }
+            .hero-badges span {
+                font-size: 0.6rem;
+                padding: 3px 10px;
+            }
+            .section-title {
+                font-size: 1.6rem;
+            }
+            .grid-3 {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .glass-card {
+                padding: 16px;
+            }
+            .product-price {
+                font-size: 1.2rem;
+            }
+            .chatbot-window {
+                width: 280px;
+                right: 10px;
+                bottom: 80px;
+                max-height: 400px;
+            }
+            .chatbot-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+            .admin-panel {
+                padding: 16px;
+            }
+            .admin-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ===== TABLET ===== */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            nav {
+                padding: 14px 24px;
+            }
+            .hero-content h1 {
+                font-size: 3.5rem;
+            }
+            .grid-3 {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== VIDEO BACKGROUND ===== -->
+    <video id="video-bg" autoplay muted loop playsinline>
+        <source src="https://cdn.pixabay.com/video/2023/01/07/145969-792620201_tiny.mp4" type="video/mp4" />
+        <source src="https://cdn.pixabay.com/video/2023/01/07/145969-792620201_tiny.webm" type="video/webm" />
+    </video>
+    <div id="video-overlay"></div>
+
+    <!-- ===== 3D CANVAS ===== -->
+    <div id="three-canvas"></div>
+
+    <!-- ===== CONTENT OVERLAY ===== -->
+    <div class="content-overlay">
+
+        <!-- ===== NAV ===== -->
+        <nav id="navbar">
+            <div class="logo" onclick="navigate('home')">NEXORA <small>TECH</small></div>
+            <div class="nav-links" id="navLinks">
+                <a class="active" data-page="home">Home</a>
+                <a data-page="shop">Shop</a>
+                <a data-page="categories">Categories</a>
+                <a data-page="about">About</a>
+                <a data-page="contact">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <a class="btn btn-outline" data-page="login" id="loginBtn">Login</a>
+                <a class="btn btn-primary" data-page="register" id="registerBtn">Register</a>
+                <span class="cart-icon" data-page="cart">🛒<span class="cart-count" id="cartCount">0</span></span>
+                <span id="userBadge" style="display:none; font-weight:600; color:#8ab4f8; font-size:0.85rem;"></span>
+                <a id="logoutBtn" style="display:none; color:#b33a4a; cursor:pointer; font-size:0.85rem;">Logout</a>
+            </div>
+        </nav>
+
+        <!-- ===== PAGE ROOT ===== -->
+        <div id="appRoot">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- ===== CHATBOT ===== -->
+        <div class="chatbot-float">
+            <button class="chatbot-toggle" id="chatToggle">💬</button>
+            <div class="chatbot-window" id="chatWindow">
+                <div class="chatbot-header">
+                    <span class="status"></span> NEXORA Assistant
+                </div>
+                <div class="chatbot-messages" id="chatMessages">
+                    <div class="msg bot">👋 Hi! Ask me about products, orders, or tech advice!</div>
+                </div>
+                <div class="chatbot-input">
+                    <input type="text" id="chatInput" placeholder="Ask anything..." />
+                    <button id="chatSend">→</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  NEXORA TECH — FULL 3D PREMIUM E-COMMERCE WITH DATABASE
+        // ============================================================
+
+        (() => {
+            'use strict';
+
+            // ==========================================================
+            //  1. THREE.JS 3D SCENE
+            // ==========================================================
+            const container = document.getElementById('three-canvas');
+
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0a0c12, 0.015);
+
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 12);
+
+            const renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            // ---- Lights ----
+            const ambient = new THREE.AmbientLight(0x223355, 0.3);
+            scene.add(ambient);
+
+            const mainLight = new THREE.DirectionalLight(0x6a9aff, 1.5);
+            mainLight.position.set(5, 8, 5);
+            scene.add(mainLight);
+
+            const fillLight = new THREE.DirectionalLight(0x7a4cff, 0.6);
+            fillLight.position.set(-5, 0, 5);
+            scene.add(fillLight);
+
+            const rimLight = new THREE.DirectionalLight(0x4cd9a0, 0.4);
+            rimLight.position.set(0, -5, -5);
+            scene.add(rimLight);
+
+            const pointLight = new THREE.PointLight(0x3b6eff, 0.8, 20);
+            pointLight.position.set(0, 3, 5);
+            scene.add(pointLight);
+
+            // ---- Particles ----
+            const particleCount = 1500;
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const sizes = new Float32Array(particleCount);
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 40;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 40 - 10;
+
+                const color = new THREE.Color().setHSL(0.6 + Math.random() * 0.2, 0.7, 0.5 + Math.random() * 0.3);
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+
+                sizes[i] = Math.random() * 0.08 + 0.02;
+            }
+
+            const particleGeo = new THREE.BufferGeometry();
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.05,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true,
+            });
+            const particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            // ---- Floating Orbs ----
+            const orbs = [];
+            const orbColors = [0x3b6eff, 0x7a4cff, 0x4cd9a0, 0xf4b942];
+            for (let i = 0; i < 10; i++) {
+                const size = 0.08 + Math.random() * 0.2;
+                const geo = new THREE.SphereGeometry(size, 16, 16);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: orbColors[i % orbColors.length],
+                    transparent: true,
+                    opacity: 0.2 + Math.random() * 0.3,
+                    blending: THREE.AdditiveBlending,
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 10 + 2,
+                    (Math.random() - 0.5) * 20 - 5
+                );
+                mesh.userData = {
+                    speed: 0.2 + Math.random() * 0.3,
+                    phase: Math.random() * Math.PI * 2,
+                    radius: 0.5 + Math.random() * 1.5,
+                    baseY: mesh.position.y,
+                };
+                scene.add(mesh);
+                orbs.push(mesh);
+            }
+
+            // ---- Floating Tech Rings ----
+            const ringGroup = new THREE.Group();
+            for (let i = 0; i < 3; i++) {
+                const radius = 2 + i * 1.2;
+                const tubeRadius = 0.02 + i * 0.005;
+                const geo = new THREE.TorusGeometry(radius, tubeRadius, 16, 64);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: [0x3b6eff, 0x7a4cff, 0x4cd9a0][i],
+                    transparent: true,
+                    opacity: 0.12 + i * 0.04,
+                    wireframe: false,
+                    blending: THREE.AdditiveBlending,
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.rotation.x = Math.PI * 0.3 + i * 0.2;
+                mesh.rotation.y = i * 0.5;
+                mesh.position.y = -1 + i * 0.5;
+                mesh.userData = { speed: 0.2 + i * 0.1 };
+                ringGroup.add(mesh);
+            }
+            ringGroup.position.y = 1;
+            scene.add(ringGroup);
+
+            // ---- 3D Product Models ----
+            const productModels = [];
+
+            function createTechModel(type, color) {
+                const group = new THREE.Group();
+                const mat = new THREE.MeshStandardMaterial({
+                    color: color || 0x3b6eff,
+                    metalness: 0.7,
+                    roughness: 0.2,
+                    emissive: color || 0x3b6eff,
+                    emissiveIntensity: 0.05,
+                });
+
+                switch (type) {
+                    case 'earbuds':
+                        const earbud1 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), mat);
+                        earbud1.position.set(-0.4, 0, 0);
+                        const earbud2 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), mat);
+                        earbud2.position.set(0.4, 0, 0);
+                        const stem1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.4), mat);
+                        stem1.position.set(-0.4, -0.3, 0);
+                        const stem2 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.4), mat);
+                        stem2.position.set(0.4, -0.3, 0);
+                        group.add(earbud1, earbud2, stem1, stem2);
+                        break;
+                    case 'watch':
+                        const face = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.08, 24), mat);
+                        face.rotation.x = Math.PI / 2;
+                        const band1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.3), mat);
+                        band1.position.set(0, -0.3, 0);
+                        const band2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.3), mat);
+                        band2.position.set(0, 0.3, 0);
+                        group.add(face, band1, band2);
+                        break;
+                    case 'speaker':
+                        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.3, 24), mat);
+                        const cone = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.15, 24), mat);
+                        cone.position.y = 0.2;
+                        group.add(body, cone);
+                        break;
+                    case 'ssd':
+                        const ssd = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.4), mat);
+                        const label = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.01, 0.2),
+                            new THREE.MeshStandardMaterial({ color: 0x4cd9a0, emissive: 0x4cd9a0,
+                                emissiveIntensity: 0.1 }));
+                        label.position.z = 0.21;
+                        group.add(ssd, label);
+                        break;
+                    default:
+                        const cube = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), mat);
+                        group.add(cube);
+                }
+                return group;
+            }
+
+            const modelTypes = ['earbuds', 'watch', 'speaker', 'ssd', 'earbuds', 'watch'];
+            const modelColors = [0x3b6eff, 0x7a4cff, 0x4cd9a0, 0xf4b942, 0x3b6eff, 0x7a4cff];
+            for (let i = 0; i < 6; i++) {
+                const model = createTechModel(modelTypes[i % modelTypes.length], modelColors[i % modelColors.length]);
+                const angle = (i / 6) * Math.PI * 2;
+                const radius = 3.5 + Math.random() * 1;
+                model.position.set(
+                    Math.cos(angle) * radius,
+                    (Math.random() - 0.5) * 2,
+                    Math.sin(angle) * radius - 2
+                );
+                model.scale.setScalar(0.6 + Math.random() * 0.4);
+                model.rotation.y = Math.random() * Math.PI * 2;
+                model.userData = {
+                    rotSpeed: 0.3 + Math.random() * 0.4,
+                    floatSpeed: 0.3 + Math.random() * 0.3,
+                    floatPhase: Math.random() * Math.PI * 2,
+                    baseY: model.position.y,
+                };
+                scene.add(model);
+                productModels.push(model);
+            }
+
+            // ---- Mouse Controls ----
+            let mouseX = 0,
+                mouseY = 0;
+            let targetX = 0,
+                targetY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            // ---- Resize ----
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // ---- Animation Loop ----
+            let time = 0;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.01;
+
+                targetX += (mouseX - targetX) * 0.05;
+                targetY += (mouseY - targetY) * 0.05;
+
+                camera.position.x = targetX * 0.5;
+                camera.position.y = 2 + targetY * 0.3;
+                camera.lookAt(0, 1, 0);
+
+                particles.rotation.y += 0.001;
+
+                orbs.forEach((orb, i) => {
+                    orb.position.y = orb.userData.baseY + Math.sin(time * orb.userData.speed + orb.userData
+                        .phase) * orb.userData.radius * 0.3;
+                    orb.position.x += Math.sin(time * 0.2 + i) * 0.001;
+                    orb.position.z += Math.cos(time * 0.2 + i) * 0.001;
+                });
+
+                ringGroup.children.forEach((ring, i) => {
+                    ring.rotation.x += 0.003 * ring.userData.speed;
+                    ring.rotation.y += 0.005 * ring.userData.speed;
+                });
+                ringGroup.rotation.y += 0.002;
+
+                productModels.forEach((model, i) => {
+                    model.rotation.y += 0.005 * model.userData.rotSpeed;
+                    model.position.y = model.userData.baseY + Math.sin(time * model.userData.floatSpeed + model
+                        .userData.floatPhase) * 0.3;
+                });
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // ==========================================================
+            //  2. FULL BACKEND WITH DATABASE
+            // ==========================================================
+
+            // ---- In-Memory Database ----
+            const DB = {
+                users: [],
+                categories: [
+                    { id: 1, name: 'Audio', slug: 'audio', icon: '🎧' },
+                    { id: 2, name: 'Keyboards', slug: 'keyboards', icon: '⌨️' },
+                    { id: 3, name: 'Mice', slug: 'mice', icon: '🖱️' },
+                    { id: 4, name: 'Wearables', slug: 'wearables', icon: '⌚' },
+                    { id: 5, name: 'Storage', slug: 'storage', icon: '💾' },
+                    { id: 6, name: 'Accessories', slug: 'accessories', icon: '🔌' },
+                ],
+                products: [],
+                product_images: [],
+                product_specs: [],
+                carts: [],
+                cart_items: [],
+                wishlists: [],
+                addresses: [],
+                orders: [],
+                order_items: [],
+                reviews: [],
+                contact_messages: [],
+                chatbot_messages: [],
+                inventory_logs: [],
+                _nextId: 100,
+                _nextOrderId: 1000,
+            };
+
+            // ---- Tech Product Images ----
+            const techImages = {
+                earbuds: [
+                    'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop'
+                ],
+                keyboard: [
+                    'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1595225476474-87563907a212?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1618384887929-78ec40c2bf6a?w=400&h=400&fit=crop'
+                ],
+                mouse: [
+                    'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=400&h=400&fit=crop'
+                ],
+                watch: [
+                    'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=400&h=400&fit=crop'
+                ],
+                ssd: [
+                    'https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1612810806563-4eede3a1ad9d?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=400&h=400&fit=crop'
+                ],
+                speaker: [
+                    'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1589003077984-894e133dabab?w=400&h=400&fit=crop'
+                ],
+                powerbank: [
+                    'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1585338107529-13afc5f02586?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1602751584554-5a42b3885054?w=400&h=400&fit=crop'
+                ],
+                webcam: [
+                    'https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1617040619263-41c5a1ca9d8a?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400&h=400&fit=crop'
+                ],
+                controller: [
+                    'https://images.unsplash.com/photo-1592150626442-8db908a4b622?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1593118247619-e2d6f056869e?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1593118247619-e2d6f056869e?w=400&h=400&fit=crop'
+                ],
+                stand: [
+                    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400&h=400&fit=crop',
+                    'https://images.unsplash.com/photo-1618331788900-12c54e27b91a?w=400&h=400&fit=crop'
+                ]
+            };
+
+            function getTechImage(category, index) {
+                const categoryMap = {
+                    1: 'earbuds',
+                    2: 'keyboard',
+                    3: 'mouse',
+                    4: 'watch',
+                    5: 'ssd',
+                    6: 'speaker'
+                };
+                const key = categoryMap[category] || 'earbuds';
+                const images = techImages[key] || techImages.earbuds;
+                return images[index % images.length];
+            }
+
+            // ---- Seed Products ----
+            function seedProducts() {
+                const techProducts = [{
+                    name: 'AuraBuds Pro Max',
+                    desc: 'Premium true wireless earbuds with adaptive noise cancellation, spatial audio, and 48-hour battery life.',
+                    cat: 1,
+                    price: 299,
+                    discount: 15,
+                    stock: 45,
+                    featured: true,
+                    bestseller: true
+                }, {
+                    name: 'MechKey Titan V3',
+                    desc: 'Ultimate mechanical keyboard with hot-swappable switches, RGB per-key lighting, and PBT keycaps.',
+                    cat: 2,
+                    price: 189,
+                    discount: 10,
+                    stock: 32,
+                    featured: true,
+                    bestseller: true
+                }, {
+                    name: 'GlideX Pro Mouse',
+                    desc: 'Professional gaming mouse with 26K DPI sensor, 8 programmable buttons, and ultra-lightweight design.',
+                    cat: 3,
+                    price: 149,
+                    discount: 20,
+                    stock: 28,
+                    featured: true,
+                    bestseller: false
+                }, {
+                    name: 'NexBand Smart Watch',
+                    desc: 'Advanced smartwatch with AMOLED display, ECG, blood oxygen monitoring, and 14-day battery life.',
+                    cat: 4,
+                    price: 399,
+                    discount: 0,
+                    stock: 18,
+                    featured: true,
+                    bestseller: true
+                }, {
+                    name: 'PowerCore 20000 Ultra',
+                    desc: 'High-capacity power bank with 20000mAh, 65W fast charging, and digital display.',
+                    cat: 6,
+                    price: 79,
+                    discount: 5,
+                    stock: 56,
+                    featured: false,
+                    bestseller: true
+                }, {
+                    name: 'Orbit Sound Sphere',
+                    desc: '360° Bluetooth speaker with immersive sound, LED light show, and 24-hour playtime.',
+                    cat: 1,
+                    price: 129,
+                    discount: 25,
+                    stock: 22,
+                    featured: true,
+                    bestseller: false
+                }, {
+                    name: 'VisionCam 4K Pro',
+                    desc: 'Ultra HD webcam with 4K resolution, dual microphones, and AI noise cancellation.',
+                    cat: 6,
+                    price: 199,
+                    discount: 10,
+                    stock: 15,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'SSD Nitro 1TB',
+                    desc: 'Blazing-fast NVMe SSD with read speeds up to 7000MB/s and advanced cooling technology.',
+                    cat: 5,
+                    price: 159,
+                    discount: 0,
+                    stock: 40,
+                    featured: true,
+                    bestseller: true
+                }, {
+                    name: 'GamePad Elite X',
+                    desc: 'Professional wireless controller with haptic feedback, programmable paddles, and 40-hour battery.',
+                    cat: 6,
+                    price: 179,
+                    discount: 15,
+                    stock: 25,
+                    featured: false,
+                    bestseller: true
+                }, {
+                    name: 'LapCool Pro Stand',
+                    desc: 'Ergonomic laptop stand with built-in cooling fans, adjustable height, and cable management.',
+                    cat: 6,
+                    price: 89,
+                    discount: 0,
+                    stock: 35,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'Phantom Earbuds',
+                    desc: 'Ultra-premium earbuds with graphene drivers, LDAC support, and 60-hour battery with case.',
+                    cat: 1,
+                    price: 349,
+                    discount: 20,
+                    stock: 12,
+                    featured: true,
+                    bestseller: false
+                }, {
+                    name: 'Titan Keyboard Pro',
+                    desc: 'Full-size mechanical keyboard with hot-swappable switches, magnetic wrist rest, and RGB.',
+                    cat: 2,
+                    price: 249,
+                    discount: 0,
+                    stock: 20,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'Apex Gaming Mouse',
+                    desc: 'Ultra-lightweight gaming mouse with 8K polling rate, 25,600 DPI, and PTFE feet.',
+                    cat: 3,
+                    price: 99,
+                    discount: 10,
+                    stock: 42,
+                    featured: true,
+                    bestseller: true
+                }, {
+                    name: 'Echo Buds+',
+                    desc: 'Premium noise-cancelling earbuds with voice assistant integration and 36-hour battery.',
+                    cat: 1,
+                    price: 229,
+                    discount: 5,
+                    stock: 30,
+                    featured: false,
+                    bestseller: true
+                }, {
+                    name: 'Volt Power Bank Pro',
+                    desc: 'Compact 10000mAh power bank with 45W fast charging and built-in USB-C cable.',
+                    cat: 6,
+                    price: 59,
+                    discount: 0,
+                    stock: 65,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'Lunar Speaker Pro',
+                    desc: 'Premium portable speaker with 50W output, 360° sound, and customizable RGB lighting.',
+                    cat: 1,
+                    price: 199,
+                    discount: 20,
+                    stock: 18,
+                    featured: true,
+                    bestseller: false
+                }, {
+                    name: 'Swift SSD 2TB',
+                    desc: 'Ultra-fast 2TB NVMe SSD with advanced cooling and 5-year warranty.',
+                    cat: 5,
+                    price: 279,
+                    discount: 10,
+                    stock: 22,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'Control Deck Pro',
+                    desc: 'Universal gaming controller with adjustable thumbsticks, back buttons, and 50-hour battery.',
+                    cat: 6,
+                    price: 159,
+                    discount: 0,
+                    stock: 27,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'NexBand Mini',
+                    desc: 'Compact fitness tracker with heart rate, sleep monitoring, and 10-day battery life.',
+                    cat: 4,
+                    price: 89,
+                    discount: 15,
+                    stock: 38,
+                    featured: false,
+                    bestseller: true
+                }, {
+                    name: 'ChromaCharge Hub',
+                    desc: 'Multi-device charging station with 65W GaN technology and 6 ports for all devices.',
+                    cat: 6,
+                    price: 119,
+                    discount: 0,
+                    stock: 30,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'Quantum Buds X',
+                    desc: 'Next-gen earbuds with quantum drivers, 3D audio, and 72-hour battery life.',
+                    cat: 1,
+                    price: 449,
+                    discount: 25,
+                    stock: 8,
+                    featured: true,
+                    bestseller: false
+                }, {
+                    name: 'Nexus Mechanical Keyboard',
+                    desc: 'Premium mechanical keyboard with optical switches, RGB, and wireless connectivity.',
+                    cat: 2,
+                    price: 329,
+                    discount: 15,
+                    stock: 14,
+                    featured: true,
+                    bestseller: false
+                }, {
+                    name: 'UltraGlide Mouse',
+                    desc: 'Ultra-precise mouse with 50K DPI sensor, 9 buttons, and 100-hour battery.',
+                    cat: 3,
+                    price: 219,
+                    discount: 10,
+                    stock: 19,
+                    featured: false,
+                    bestseller: false
+                }, {
+                    name: 'NexBand Pro',
+                    desc: 'Premium smartwatch with always-on display, LTE, and 21-day battery life.',
+                    cat: 4,
+                    price: 549,
+                    discount: 0,
+                    stock: 10,
+                    featured: true,
+                    bestseller: true
+                }];
+
+                techProducts.forEach((tp, i) => {
+                    const id = DB._nextId++;
+                    const imgId = DB._nextId++;
+                    const imgUrl = getTechImage(tp.cat, i);
+                    DB.products.push({
+                        id,
+                        name: tp.name,
+                        description: tp.desc,
+                        category_id: tp.cat,
+                        price: tp.price,
+                        discount: tp.discount,
+                        stock: tp.stock,
+                        rating: parseFloat((3.5 + Math.random() * 1.5).toFixed(1)),
+                        reviews_count: Math.floor(Math.random() * 300) + 20,
+                        featured: tp.featured,
+                        bestseller: tp.bestseller,
+                        created_at: new Date().toISOString()
+                    });
+                    DB.product_images.push({
+                        id: imgId,
+                        product_id: id,
+                        url: imgUrl,
+                        is_primary: true,
+                        alt: tp.name
+                    });
+                    for (let j = 1; j < 3; j++) {
+                        DB.product_images.push({
+                            id: DB._nextId++,
+                            product_id: id,
+                            url: getTechImage(tp.cat, i + j),
+                            is_primary: false,
+                            alt: tp.name + ' view ' + (j + 1)
+                        });
+                    }
+                    const specs = [
+                        ['Brand', 'NEXORA'],
+                        ['Model', tp.name.split(' ').slice(0, 2).join(' ')],
+                        ['Warranty', '1 Year'],
+                        ['Weight', (100 + Math.random() * 400).toFixed(0) + 'g']
+                    ];
+                    if (tp.cat === 1) specs.push(['Battery', (20 + Math.random() * 40).toFixed(0) + ' hours']);
+                    if (tp.cat === 2) specs.push(['Switch Type', 'Mechanical']);
+                    if (tp.cat === 4) specs.push(['Waterproof', '5ATM']);
+                    if (tp.cat === 5) specs.push(['Interface', 'NVMe PCIe 4.0']);
+                    specs.forEach(([key, value]) => {
+                        DB.product_specs.push({
+                            id: DB._nextId++,
+                            product_id: id,
+                            key,
+                            value
+                        });
+                    });
+                });
+
+                console.log('✅ Seeded ' + DB.products.length + ' products');
+            }
+
+            seedProducts();
+
+            // ---- Create Admin User ----
+            function hash(pw) { return '$2b$10$' + btoa(pw + 'nexora2025') + 'hash'; }
+
+            DB.users.push({
+                id: 1,
+                email: 'mahamirfan198@gmail.com',
+                password: hash('admin2025'),
+                role: 'admin',
+                name: 'Maha Mirfan',
+                created_at: new Date().toISOString()
+            });
+            DB.users.push({
+                id: 2,
+                email: 'demo@nexora.com',
+                password: hash('demo123'),
+                role: 'customer',
+                name: 'Demo User',
+                created_at: new Date().toISOString()
+            });
+
+            console.log('📊 Database initialized with ' + DB.products.length + ' products');
+
+            // ==========================================================
+            //  3. SESSION & HELPER FUNCTIONS
+            // ==========================================================
+
+            let currentUser = null;
+
+            function findUser(email) {
+                return DB.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+            }
+
+            function findProduct(id) {
+                return DB.products.find(p => p.id === id);
+            }
+
+            function getCart(userId) {
+                let cart = DB.carts.find(c => c.user_id === userId);
+                if (!cart) {
+                    cart = { id: DB._nextId++, user_id: userId, created_at: new Date().toISOString() };
+                    DB.carts.push(cart);
+                }
+                return cart;
+            }
+
+            function getCartItems(cartId) {
+                return DB.cart_items.filter(ci => ci.cart_id === cartId);
+            }
+
+            function getProductWithDetails(productId) {
+                const p = findProduct(productId);
+                if (!p) return null;
+                const images = DB.product_images.filter(img => img.product_id === p.id);
+                const specs = DB.product_specs.filter(s => s.product_id === p.id);
+                const category = DB.categories.find(c => c.id === p.category_id);
+                return { ...p, images, specs, category: category ? category.name : 'General' };
+            }
+
+            function getCartTotal(userId) {
+                const cart = getCart(userId);
+                const items = getCartItems(cart.id);
+                let total = 0;
+                for (const item of items) {
+                    const p = findProduct(item.product_id);
+                    if (p) total += (p.price - (p.discount || 0)) * item.quantity;
+                }
+                return total;
+            }
+
+            function verifyPassword(plain, hashed) {
+                return hashed === hash(plain);
+            }
+
+            function isAdmin() {
+                return currentUser && currentUser.role === 'admin';
+            }
+
+            // ==========================================================
+            //  4. API HANDLER
+            // ==========================================================
+
+            function apiCall(route, method, body) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        try {
+                            const result = handleApi(route, method, body);
+                            resolve(result);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    }, 80);
+                });
+            }
+
+            function handleApi(route, method, body) {
+                const [resource, id] = route.split('/').filter(Boolean);
+
+                if (resource === 'auth') {
+                    if (method === 'POST' && id === 'login') {
+                        const { email, password } = body;
+                        const user = findUser(email);
+                        if (!user) return { error: 'User not found' };
+                        if (!verifyPassword(password, user.password)) return { error: 'Invalid password' };
+                        currentUser = { ...user };
+                        return { success: true, user: currentUser };
+                    }
+                    if (method === 'POST' && id === 'register') {
+                        const { email, password, name } = body;
+                        if (findUser(email)) return { error: 'Email already registered' };
+                        const user = {
+                            id: DB._nextId++,
+                            email,
+                            password: hash(password),
+                            role: 'customer',
+                            name: name || email.split('@')[0],
+                            created_at: new Date().toISOString()
+                        };
+                        DB.users.push(user);
+                        return { success: true, user };
+                    }
+                    if (method === 'POST' && id === 'logout') {
+                        currentUser = null;
+                        return { success: true };
+                    }
+                    if (method === 'GET' && id === 'me') {
+                        return { user: currentUser };
+                    }
+                }
+
+                if (resource === 'products') {
+                    if (method === 'GET') {
+                        if (id) {
+                            const p = getProductWithDetails(parseInt(id));
+                            return p || { error: 'Product not found' };
+                        }
+                        let list = DB.products.map(p => getProductWithDetails(p.id));
+                        if (body?.category) list = list.filter(p => p.category_id === parseInt(body.category));
+                        if (body?.search) {
+                            const s = body.search.toLowerCase();
+                            list = list.filter(p => p.name.toLowerCase().includes(s) || p.description.toLowerCase()
+                            .includes(s));
+                        }
+                        if (body?.sort) {
+                            if (body.sort === 'price-asc') list.sort((a, b) => a.price - b.price);
+                            else if (body.sort === 'price-desc') list.sort((a, b) => b.price - a.price);
+                            else if (body.sort === 'rating') list.sort((a, b) => b.rating - a.rating);
+                            else if (body.sort === 'bestseller') list.sort((a, b) => (b.bestseller ? 1 : 0) - (a
+                            .bestseller ? 1 : 0));
+                        }
+                        const page = parseInt(body?.page) || 1;
+                        const limit = parseInt(body?.limit) || 9;
+                        const start = (page - 1) * limit;
+                        const paginated = list.slice(start, start + limit);
+                        return { products: paginated, total: list.length, page, limit };
+                    }
+                    if (method === 'POST') {
+                        if (!isAdmin()) return { error: 'Unauthorized' };
+                        const p = body;
+                        p.id = DB._nextId++;
+                        p.created_at = new Date().toISOString();
+                        DB.products.push(p);
+                        return p;
+                    }
+                    if (method === 'PUT' && id) {
+                        if (!isAdmin()) return { error: 'Unauthorized' };
+                        const idx = DB.products.findIndex(p => p.id === parseInt(id));
+                        if (idx === -1) return { error: 'Product not found' };
+                        DB.products[idx] = { ...DB.products[idx], ...body };
+                        return DB.products[idx];
+                    }
+                    if (method === 'DELETE' && id) {
+                        if (!isAdmin()) return { error: 'Unauthorized' };
+                        const idx = DB.products.findIndex(p => p.id === parseInt(id));
+                        if (idx === -1) return { error: 'Product not found' };
+                        DB.products.splice(idx, 1);
+                        return { success: true };
+                    }
+                }
+
+                if (resource === 'cart') {
+                    if (!currentUser) return { error: 'Unauthorized' };
+                    const cart = getCart(currentUser.id);
+                    if (method === 'GET') {
+                        const items = getCartItems(cart.id).map(item => {
+                            const p = findProduct(item.product_id);
+                            return { ...item, product: p };
+                        });
+                        const total = getCartTotal(currentUser.id);
+                        return { items, total, count: items.reduce((s, i) => s + i.quantity, 0) };
+                    }
+                    if (method === 'POST') {
+                        const { product_id, quantity = 1 } = body;
+                        const p = findProduct(parseInt(product_id));
+                        if (!p) return { error: 'Product not found' };
+                        let existing = DB.cart_items.find(ci => ci.cart_id === cart.id && ci.product_id === p.id);
+                        if (existing) {
+                            existing.quantity += quantity;
+                        } else {
+                            DB.cart_items.push({
+                                id: DB._nextId++,
+                                cart_id: cart.id,
+                                product_id: p.id,
+                                quantity,
+                                added_at: new Date().toISOString()
+                            });
+                        }
+                        return { success: true };
+                    }
+                    if (method === 'PUT' && id) {
+                        const item = DB.cart_items.find(ci => ci.id === parseInt(id) && ci.cart_id === cart.id);
+                        if (!item) return { error: 'Item not found' };
+                        item.quantity = body.quantity || 1;
+                        return { success: true };
+                    }
+                    if (method === 'DELETE' && id) {
+                        const idx = DB.cart_items.findIndex(ci => ci.id === parseInt(id) && ci.cart_id === cart.id);
+                        if (idx === -1) return { error: 'Item not found' };
+                        DB.cart_items.splice(idx, 1);
+                        return { success: true };
+                    }
+                }
+
+                if (resource === 'orders') {
+                    if (!currentUser) return { error: 'Unauthorized' };
+                    if (method === 'GET') {
+                        let orders = DB.orders.filter(o => o.user_id === currentUser.id);
+                        if (isAdmin()) orders = DB.orders;
+                        return orders.map(o => {
+                            const items = DB.order_items.filter(oi => oi.order_id === o.id);
+                            return { ...o, items };
+                        });
+                    }
+                    if (method === 'POST') {
+                        const cart = getCart(currentUser.id);
+                        const items = getCartItems(cart.id);
+                        if (items.length === 0) return { error: 'Cart is empty' };
+                        for (const item of items) {
+                            const p = findProduct(item.product_id);
+                            if (!p || p.stock < item.quantity) return { error: `Insufficient stock for ${p?.name || 'product'}` };
+                        }
+                        const order = {
+                            id: DB._nextOrderId++,
+                            user_id: currentUser.id,
+                            status: 'pending',
+                            total: getCartTotal(currentUser.id),
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        };
+                        DB.orders.push(order);
+                        for (const item of items) {
+                            DB.order_items.push({
+                                id: DB._nextId++,
+                                order_id: order.id,
+                                product_id: item.product_id,
+                                quantity: item.quantity,
+                                price: findProduct(item.product_id).price
+                            });
+                            const p = findProduct(item.product_id);
+                            p.stock -= item.quantity;
+                            DB.inventory_logs.push({
+                                id: DB._nextId++,
+                                product_id: p.id,
+                                change: -item.quantity,
+                                reason: 'Order #' + order.id,
+                                created_at: new Date().toISOString()
+                            });
+                        }
+                        DB.cart_items = DB.cart_items.filter(ci => ci.cart_id !== cart.id);
+                        return { success: true, order };
+                    }
+                    if (method === 'PUT' && id) {
+                        if (!isAdmin()) return { error: 'Unauthorized' };
+                        const order = DB.orders.find(o => o.id === parseInt(id));
+                        if (!order) return { error: 'Order not found' };
+                        order.status = body.status || order.status;
+                        order.updated_at = new Date().toISOString();
+                        return order;
+                    }
+                }
+
+                if (resource === 'admin') {
+                    if (!isAdmin()) return { error: 'Unauthorized' };
+                    if (method === 'GET') {
+                        const totalOrders = DB.orders.length;
+                        const totalRevenue = DB.orders.reduce((s, o) => s + (o.total || 0), 0);
+                        const totalProducts = DB.products.length;
+                        const lowStock = DB.products.filter(p => p.stock < 10);
+                        const outOfStock = DB.products.filter(p => p.stock === 0);
+                        const totalUsers = DB.users.length;
+                        const recentOrders = DB.orders.slice(-5).reverse();
+                        return {
+                            stats: { totalOrders, totalRevenue, totalProducts, lowStock: lowStock.length,
+                                outOfStock: outOfStock.length, totalUsers },
+                            lowStock,
+                            outOfStock,
+                            recentOrders,
+                            orders: DB.orders,
+                            products: DB.products,
+                            users: DB.users,
+                            reviews: DB.reviews,
+                            contactMessages: DB.contact_messages,
+                            inventoryLogs: DB.inventory_logs
+                        };
+                    }
+                    if (method === 'POST' && id === 'restore') {
+                        const { product_id, quantity } = body;
+                        const p = findProduct(parseInt(product_id));
+                        if (!p) return { error: 'Product not found' };
+                        p.stock += parseInt(quantity) || 1;
+                        DB.inventory_logs.push({
+                            id: DB._nextId++,
+                            product_id: p.id,
+                            change: parseInt(quantity) || 1,
+                            reason: 'Admin restore',
+                            created_at: new Date().toISOString()
+                        });
+                        return { success: true, stock: p.stock };
+                    }
+                }
+
+                if (resource === 'contact') {
+                    if (method === 'POST') {
+                        const msg = { id: DB._nextId++, ...body, created_at: new Date().toISOString() };
+                        DB.contact_messages.push(msg);
+                        return { success: true };
+                    }
+                }
+
+                if (resource === 'chatbot') {
+                    if (method === 'POST') {
+                        const { message } = body;
+                        const lower = message.toLowerCase();
+                        let reply = "I'd be happy to help! Could you tell me more about what you're looking for?";
+                        const faqs = {
+                            'price': 'Our products range from $49 to $549. Check the Shop page for details!',
+                            'cost': 'Prices vary by product. Browse our collection for specific pricing.',
+                            'shipping': 'Free shipping on orders over $99! Delivery in 3-5 business days.',
+                            'delivery': 'Standard delivery takes 3-5 days. Express shipping available at checkout.',
+                            'return': '30-day hassle-free returns on all products. Contact support for assistance.',
+                            'refund': 'Refunds are processed within 5-7 business days after return approval.',
+                            'warranty': 'All products come with a 1-year manufacturer warranty.',
+                            'stock': 'Stock is updated in real-time. Check product pages for availability.',
+                            'available': 'Most products are in stock. Premium items may have limited quantities.',
+                            'battery': 'Battery life varies by product. Check specs on each product page.',
+                            'quality': 'We only sell premium, tested products from trusted brands.',
+                            'support': 'Contact us at support@nexora.tech or use this chat for help.',
+                            'admin': 'Admin login: mahamirfan198@gmail.com / admin2025',
+                            'order': 'You can track your orders in the Account section.',
+                            'track': 'Order tracking is available in your Account dashboard.'
+                        };
+                        for (const [key, value] of Object.entries(faqs)) {
+                            if (lower.includes(key)) { reply = value; break; }
+                        }
+                        if (lower.includes('earbud') || lower.includes('audio')) reply =
+                            'Check out our premium earbuds like AuraBuds Pro Max, Phantom Earbuds, and Quantum Buds X!';
+                        if (lower.includes('keyboard')) reply =
+                            'Our MechKey Titan V3, Titan Keyboard Pro, and Nexus Mechanical Keyboard are top-rated!';
+                        if (lower.includes('watch') || lower.includes('band')) reply =
+                            'NexBand Smart Watch, NexBand Mini, and NexBand Pro are our best-selling wearables.';
+                        if (lower.includes('speaker')) reply =
+                            'The Orbit Sound Sphere and Lunar Speaker Pro offer premium audio experiences.';
+                        if (lower.includes('ssd') || lower.includes('storage')) reply =
+                            'SSD Nitro 1TB and Swift SSD 2TB are our high-performance storage solutions.';
+
+                        DB.chatbot_messages.push({
+                            id: DB._nextId++,
+                            user_message: message,
+                            bot_reply: reply,
+                            created_at: new Date().toISOString()
+                        });
+                        return { reply };
+                    }
+                }
+
+                if (resource === 'wishlist') {
+                    if (!currentUser) return { error: 'Unauthorized' };
+                    if (method === 'GET') {
+                        let wl = DB.wishlists.filter(w => w.user_id === currentUser.id);
+                        return wl.map(w => ({ ...w, product: findProduct(w.product_id) }));
+                    }
+                    if (method === 'POST') {
+                        const { product_id } = body;
+                        if (DB.wishlists.find(w => w.user_id === currentUser.id && w.product_id === parseInt(product_id)))
+                            return { error: 'Already in wishlist' };
+                        DB.wishlists.push({ id: DB._nextId++, user_id: currentUser.id, product_id: parseInt(product_id),
+                            created_at: new Date().toISOString() });
+                        return { success: true };
+                    }
+                    if (method === 'DELETE' && id) {
+                        const idx = DB.wishlists.findIndex(w => w.id === parseInt(id) && w.user_id === currentUser.id);
+                        if (idx === -1) return { error: 'Not found' };
+                        DB.wishlists.splice(idx, 1);
+                        return { success: true };
+                    }
+                }
+
+                if (resource === 'reviews') {
+                    if (method === 'POST') {
+                        if (!currentUser) return { error: 'Unauthorized' };
+                        const rev = { id: DB._nextId++, user_id: currentUser.id, ...body, created_at: new Date()
+                                .toISOString() };
+                        DB.reviews.push(rev);
+                        const p = findProduct(parseInt(body.product_id));
+                        if (p) {
+                            const all = DB.reviews.filter(r => r.product_id === p.id);
+                            p.rating = all.reduce((s, r) => s + (r.rating || 0), 0) / (all.length || 1);
+                            p.reviews_count = all.length;
+                        }
+                        return { success: true };
+                    }
+                    if (method === 'GET' && id) {
+                        return DB.reviews.filter(r => r.product_id === parseInt(id));
+                    }
+                }
+
+                if (resource === 'addresses') {
+                    if (!currentUser) return { error: 'Unauthorized' };
+                    if (method === 'GET') return DB.addresses.filter(a => a.user_id === currentUser.id);
+                    if (method === 'POST') {
+                        const addr = { id: DB._nextId++, user_id: currentUser.id, ...body, created_at: new Date()
+                                .toISOString() };
+                        DB.addresses.push(addr);
+                        return addr;
+                    }
+                }
+
+                if (resource === 'categories') {
+                    if (method === 'GET') return DB.categories;
+                }
+
+                return { error: 'API endpoint not found' };
+            }
+
+            // ==========================================================
+            //  5. UI RENDER ENGINE
+            // ==========================================================
+
+            const app = document.getElementById('appRoot');
+            let currentPage = 'home';
+
+            function render(page, params) {
+                currentPage = page;
+                let html = '';
+                switch (page) {
+                    case 'home':
+                        html = renderHome();
+                        break;
+                    case 'shop':
+                        html = renderShop(params);
+                        break;
+                    case 'categories':
+                        html = renderCategories();
+                        break;
+                    case 'product':
+                        html = renderProductDetail(params);
+                        break;
+                    case 'cart':
+                        html = renderCart();
+                        break;
+                    case 'wishlist':
+                        html = renderWishlist();
+                        break;
+                    case 'checkout':
+                        html = renderCheckout();
+                        break;
+                    case 'login':
+                        html = renderLogin();
+                        break;
+                    case 'register':
+                        html = renderRegister();
+                        break;
+                    case 'account':
+                        html = renderAccount();
+                        break;
+                    case 'orders':
+                        html = renderOrders();
+                        break;
+                    case 'about':
+                        html = renderAbout();
+                        break;
+                    case 'contact':
+                        html = renderContact();
+                        break;
+                    case 'admin':
+                        html = renderAdmin();
+                        break;
+                    default:
+                        html = '<div class="container"><h2>Page not found</h2></div>';
+                }
+                app.innerHTML = html;
+                updateNav();
+                updateCartBadge();
+                if (page === 'product') setTimeout(initProductViewer, 100);
+            }
+
+            // ---- PRODUCT CARD ----
+            function productCard(p) {
+                if (!p) return '';
+                const price = p.price - (p.discount || 0);
+                const img = p.images && p.images.length > 0 ? p.images[0].url :
+                    'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop';
+                return `
+              <div class="glass-card" data-product-id="${p.id}">
+                <img src="${img}" alt="${p.name}" onclick="navigate('product', {id:${p.id}})" style="cursor:pointer;" />
+                <div style="display:flex; justify-content:space-between; margin-top:12px; align-items:start;">
+                  <h3 style="font-size:1.1rem; flex:1;">${p.name}</h3>
+                  <span class="badge">${p.category || 'Tech'}</span>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; align-items:center;">
+                  <span class="product-price">$${price.toFixed(2)}</span>
+                  ${p.discount > 0 ? `<span class="product-old-price">$${p.price.toFixed(2)}</span>` : ''}
+                  ${p.discount > 0 ? `<span class="badge badge-sale">-${p.discount}%</span>` : ''}
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; align-items:center;">
+                  <span class="product-rating">★ ${p.rating ? p.rating.toFixed(1) : '0.0'}</span>
+                  <span class="badge ${p.stock > 0 ? 'badge-stock' : 'badge-out'}">${p.stock > 0 ? '✓ In Stock' : '✗ Out'}</span>
+                </div>
+                ${p.bestseller ? `<div style="margin-top:4px;"><span class="badge badge-bestseller">⭐ Bestseller</span></div>` : ''}
+                ${p.featured ? `<div style="margin-top:4px;"><span class="badge badge-new">🔥 Featured</span></div>` : ''}
+                <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                  <button class="btn btn-primary" style="flex:1; padding:8px 12px; font-size:0.85rem;" onclick="addToCart(${p.id})">🛒 Add</button>
+                  <button class="btn btn-outline" style="flex:1; padding:8px 12px; font-size:0.85rem;" onclick="navigate('product', {id:${p.id}})">View</button>
+                </div>
+              </div>
+            `;
+            }
+
+            // ---- PAGE RENDERERS ----
+
+            function renderHome() {
+                const allProducts = DB.products.map(p => getProductWithDetails(p.id));
+                const featured = allProducts.filter(p => p && p.featured).slice(0, 8);
+                const bestsellers = allProducts.filter(p => p && p.bestseller).slice(0, 4);
+
+                if (allProducts.length === 0) {
+                    return `
+                    <div class="hero-section">
+                        <div class="hero-content">
+                            <h1>Loading Products...</h1>
+                            <p>Please wait while we load the latest tech products.</p>
+                            <button class="btn btn-primary" onclick="location.reload()">Refresh</button>
+                        </div>
+                    </div>
+                `;
+                }
+
+                return `
+              <div class="hero-section">
+                <div class="hero-content">
+                  <div class="hero-badges">
+                    <span>🚀 Next-Gen Tech</span>
+                    <span>⚡ Premium Quality</span>
+                    <span>🛡️ 1-Year Warranty</span>
+                    <span>📦 Free Shipping $99+</span>
+                  </div>
+                  <h1>Elevate Your<br />Digital Life</h1>
+                  <p>Discover premium technology products curated for the future. From audio to wearables, we deliver excellence.</p>
+                  <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+                    <a class="btn btn-primary" data-page="shop" style="font-size:1.1rem; padding:16px 40px;">Explore Shop →</a>
+                    <a class="btn btn-outline" data-page="categories" style="font-size:1.1rem; padding:16px 40px;">Browse Categories</a>
+                  </div>
+                </div>
+              </div>
+
+              <section>
+                <div class="container">
+                  <h2 class="section-title">🔥 Featured <span>Products</span></h2>
+                  <div class="grid-3">
+                    ${featured.length > 0 ? featured.map(p => productCard(p)).join('') : '<p class="text-center">No featured products available</p>'}
+                  </div>
+                </div>
+              </section>
+
+              <section style="background: radial-gradient(ellipse at 50% 0%, rgba(59,110,255,0.05), transparent 70%);">
+                <div class="container">
+                  <h2 class="section-title">⭐ Bestsellers</h2>
+                  <div class="grid-4">
+                    ${bestsellers.length > 0 ? bestsellers.map(p => productCard(p)).join('') : '<p class="text-center">No bestsellers available</p>'}
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div class="container">
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:24px; text-align:center;">
+                    <div class="glass-card" style="padding:32px; cursor:pointer;" onclick="navigate('shop', {category:1})">
+                      <div style="font-size:3rem;">🎧</div>
+                      <h3>Premium Audio</h3>
+                      <p class="text-muted" style="font-size:0.9rem;">Immersive sound with ANC</p>
+                    </div>
+                    <div class="glass-card" style="padding:32px; cursor:pointer;" onclick="navigate('shop', {category:2})">
+                      <div style="font-size:3rem;">⌨️</div>
+                      <h3>Mechanical Keyboards</h3>
+                      <p class="text-muted" style="font-size:0.9rem;">Tactile & responsive</p>
+                    </div>
+                    <div class="glass-card" style="padding:32px; cursor:pointer;" onclick="navigate('shop', {category:4})">
+                      <div style="font-size:3rem;">⌚</div>
+                      <h3>Smart Wearables</h3>
+                      <p class="text-muted" style="font-size:0.9rem;">Track your health & fitness</p>
+                    </div>
+                    <div class="glass-card" style="padding:32px; cursor:pointer;" onclick="navigate('shop', {category:5})">
+                      <div style="font-size:3rem;">💾</div>
+                      <h3>Ultra-Fast Storage</h3>
+                      <p class="text-muted" style="font-size:0.9rem;">NVMe SSDs for pros</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderShop(params) {
+                const search = params?.search || '';
+                const category = params?.category || '';
+                const sort = params?.sort || '';
+                let list = DB.products.map(p => getProductWithDetails(p.id));
+                if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.description
+                    .toLowerCase().includes(search.toLowerCase()));
+                if (category) list = list.filter(p => p.category_id === parseInt(category));
+                if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
+                else if (sort === 'price-desc') list.sort((a, b) => b.price - a.price);
+                else if (sort === 'rating') list.sort((a, b) => b.rating - a.rating);
+                else if (sort === 'bestseller') list.sort((a, b) => (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0));
+
+                const page = parseInt(params?.page) || 1;
+                const limit = 12;
+                const total = list.length;
+                const pages = Math.ceil(total / limit);
+                const start = (page - 1) * limit;
+                const paginated = list.slice(start, start + limit);
+
+                const catOptions = DB.categories.map(c =>
+                    `<option value="${c.id}" ${c.id==parseInt(category)?'selected':''}>${c.icon} ${c.name}</option>`).join(
+                    '');
+
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">🛒 Shop All <span>Products</span></h2>
+                  <div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:32px; align-items:center;">
+                    <div style="flex:1; min-width:180px;">
+                      <input type="text" id="shopSearch" placeholder="🔍 Search products..." value="${search}" style="width:100%; padding:12px 18px; border-radius:40px; border:1px solid rgba(59,110,255,0.15); background:rgba(10,12,18,0.6); color:#eef2f6;" />
+                    </div>
+                    <select id="shopCategory" style="padding:12px 18px; border-radius:40px; border:1px solid rgba(59,110,255,0.15); background:rgba(10,12,18,0.6); color:#eef2f6;">
+                      <option value="">All Categories</option>
+                      ${catOptions}
+                    </select>
+                    <select id="shopSort" style="padding:12px 18px; border-radius:40px; border:1px solid rgba(59,110,255,0.15); background:rgba(10,12,18,0.6); color:#eef2f6;">
+                      <option value="">Sort By</option>
+                      <option value="price-asc" ${sort==='price-asc'?'selected':''}>Price: Low → High</option>
+                      <option value="price-desc" ${sort==='price-desc'?'selected':''}>Price: High → Low</option>
+                      <option value="rating" ${sort==='rating'?'selected':''}>Top Rated</option>
+                      <option value="bestseller" ${sort==='bestseller'?'selected':''}>Bestsellers</option>
+                    </select>
+                    <button class="btn btn-primary" id="shopFilterBtn">Apply Filters</button>
+                    <span class="text-muted" style="font-size:0.9rem;">${total} products</span>
+                  </div>
+                  <div class="grid-3">
+                    ${paginated.map(p => productCard(p)).join('')}
+                  </div>
+                  ${pages > 1 ? `
+                    <div style="display:flex; justify-content:center; gap:8px; margin-top:32px; flex-wrap:wrap;">
+                      ${Array.from({length: pages}, (_, i) => i+1).map(p => `
+                        <a data-page="shop" data-params='{"page":${p},"search":"${search}","category":"${category}","sort":"${sort}"}' class="btn ${p===page?'btn-primary':'btn-outline'}" style="padding:8px 18px; min-width:40px;">${p}</a>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              </section>
+            `;
+            }
+
+            function renderCategories() {
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">📂 Categories</h2>
+                  <div class="grid-4">
+                    ${DB.categories.map(c => {
+                      const count = DB.products.filter(p => p.category_id === c.id).length;
+                      return `
+                        <div class="glass-card" style="text-align:center; padding:32px; cursor:pointer;" onclick="navigate('shop', {category:${c.id}})">
+                          <div style="font-size:3rem;">${c.icon}</div>
+                          <h3 style="margin-top:12px;">${c.name}</h3>
+                          <p class="text-muted">${count} products</p>
+                          <span class="badge">Explore →</span>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderProductDetail(params) {
+                const id = parseInt(params?.id);
+                const p = getProductWithDetails(id);
+                if (!p) return '<div class="container" style="padding-top:120px;"><h2>Product not found</h2></div>';
+                const inWishlist = DB.wishlists.some(w => w.user_id === currentUser?.id && w.product_id === p.id);
+                const price = p.price - (p.discount || 0);
+                const reviews = DB.reviews.filter(r => r.product_id === p.id);
+
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:40px; align-items:start;">
+                    <div>
+                      <div class="product-3d-viewer" id="product3dViewer" data-product-id="${p.id}" style="width:100%; height:400px; border-radius:20px; overflow:hidden; background:radial-gradient(ellipse at center, #141a28, #0a0c12); border:1px solid rgba(59,110,255,0.1); position:relative;">
+                        <div style="position:absolute; bottom:20px; right:20px; background:rgba(0,0,0,0.6); padding:8px 16px; border-radius:20px; font-size:0.8rem; color:#8ab4f8; z-index:10;">3D Preview</div>
+                      </div>
+                      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px; margin-top:16px;">
+                        ${p.images && p.images.length > 0 ? p.images.slice(0,4).map(img => `
+                          <img src="${img.url}" style="width:100%; border-radius:12px; aspect-ratio:1/1; object-fit:cover; cursor:pointer; border:2px solid ${img.is_primary?'rgba(59,110,255,0.5)':'transparent'};" onclick="showImageZoom('${img.url}')" />
+                        `).join('') : `
+                          <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=200&h=200&fit=crop" style="width:100%; border-radius:12px; aspect-ratio:1/1; object-fit:cover;" />
+                        `}
+                      </div>
+                    </div>
+                    <div>
+                      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                        <span class="badge">${p.category || 'Tech'}</span>
+                        ${p.discount > 0 ? `<span class="badge badge-sale">-${p.discount}%</span>` : ''}
+                        ${p.bestseller ? `<span class="badge badge-bestseller">⭐ Bestseller</span>` : ''}
+                        ${p.featured ? `<span class="badge badge-new">Featured</span>` : ''}
+                      </div>
+                      <h1 style="font-size:2.4rem; font-weight:800; margin-bottom:12px;">${p.name}</h1>
+                      <p style="color:var(--text-secondary); font-size:1.05rem; margin-bottom:20px;">${p.description}</p>
+                      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
+                        <span style="font-size:2rem; font-weight:700; color:#8ab4f8;">$${price.toFixed(2)}</span>
+                        ${p.discount > 0 ? `<span style="font-size:1.1rem; color:#6a7a90; text-decoration:line-through;">$${p.price.toFixed(2)}</span>` : ''}
+                        <span style="display:flex; align-items:center; gap:4px; font-size:1.1rem;">
+                          <span style="color:#f4b942;">★</span> ${p.rating ? p.rating.toFixed(1) : '0.0'} (${p.reviews_count || 0} reviews)
+                        </span>
+                      </div>
+                      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+                        <span class="badge ${p.stock > 0 ? 'badge-stock' : 'badge-out'}">${p.stock > 0 ? '✓ In Stock' : '✗ Out of Stock'}</span>
+                        <span class="badge">${p.stock} units available</span>
+                      </div>
+                      <div style="margin-bottom:24px;">
+                        <h4 style="margin-bottom:8px;">Specifications</h4>
+                        ${p.specs && p.specs.length > 0 ? p.specs.map(s => `
+                          <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(59,110,255,0.05);">
+                            <span style="color:var(--text-secondary);">${s.key}</span>
+                            <span style="font-weight:500;">${s.value}</span>
+                          </div>
+                        `).join('') : '<p class="text-muted">No specifications available</p>'}
+                      </div>
+                      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" style="padding:14px 40px; font-size:1rem;" onclick="addToCart(${p.id})">🛒 Add to Cart</button>
+                        <button class="btn btn-outline" style="padding:14px 24px;" onclick="toggleWishlist(${p.id})">${inWishlist ? '❤️' : '🤍'} Wishlist</button>
+                        <button class="btn btn-outline" onclick="navigate('shop')">← Back</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:48px;">
+                    <h3 style="font-size:1.5rem; margin-bottom:20px;">📝 Customer Reviews</h3>
+                    ${reviews && reviews.length > 0 ? reviews.map(r => `
+                      <div class="glass-card" style="margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                          <strong>${r.user_name || 'Anonymous'}</strong>
+                          <span style="color:#f4b942;">${'★'.repeat(Math.round(r.rating || 0))}${'☆'.repeat(5-Math.round(r.rating || 0))}</span>
+                          <span class="text-muted text-sm">${new Date(r.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p style="margin-top:6px;">${r.comment || ''}</p>
+                      </div>
+                    `).join('') : '<p class="text-muted">No reviews yet. Be the first!</p>'}
+
+                    ${currentUser ? `
+                      <div class="glass-card" style="margin-top:20px;">
+                        <h4 style="margin-bottom:12px;">Write a Review</h4>
+                        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                          <select id="reviewRating" style="padding:10px 16px; border-radius:40px; border:1px solid rgba(59,110,255,0.15); background:rgba(10,12,18,0.6); color:#eef2f6;">
+                            ${[5,4,3,2,1].map(r => `<option value="${r}">${r} ★</option>`).join('')}
+                          </select>
+                          <input type="text" id="reviewComment" placeholder="Share your experience..." style="flex:1; padding:10px 16px; border-radius:40px; border:1px solid rgba(59,110,255,0.15); background:rgba(10,12,18,0.6); color:#eef2f6;" />
+                          <button class="btn btn-primary" onclick="submitReview(${p.id})">Submit</button>
+                        </div>
+                      </div>
+                    ` : '<p class="text-muted">Login to leave a review.</p>'}
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderCart() {
+                if (!currentUser) return '<div class="container" style="padding-top:120px;"><h2>Please login to view your cart</h2></div>';
+                const cart = getCart(currentUser.id);
+                const items = getCartItems(cart.id);
+                if (items.length === 0) return '<div class="container" style="padding-top:120px;"><h2>🛒 Your cart is empty</h2><a data-page="shop" class="btn btn-primary mt-2">Start Shopping</a></div>';
+                let total = 0;
+                const rows = items.map(item => {
+                    const p = findProduct(item.product_id);
+                    if (!p) return '';
+                    const price = p.price - (p.discount || 0);
+                    const subtotal = price * item.quantity;
+                    total += subtotal;
+                    return `
+                <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:12px;">
+                  <div style="display:flex; gap:16px; align-items:center;">
+                    <img src="${DB.product_images.find(img => img.product_id === p.id)?.url || 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop'}" style="width:60px; height:60px; border-radius:12px; object-fit:cover;" />
+                    <div>
+                      <strong>${p.name}</strong>
+                      <br />
+                      <span class="text-muted">$${price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; gap:12px; align-items:center;">
+                    <button class="btn btn-outline" style="padding:4px 14px;" onclick="updateCartItem(${item.id}, ${item.quantity-1})">−</button>
+                    <span style="min-width:30px; text-align:center; font-weight:600;">${item.quantity}</span>
+                    <button class="btn btn-outline" style="padding:4px 14px;" onclick="updateCartItem(${item.id}, ${item.quantity+1})">+</button>
+                    <button class="btn btn-danger" style="padding:4px 14px;" onclick="removeCartItem(${item.id})">✕</button>
+                  </div>
+                  <span style="font-weight:700; color:#8ab4f8;">$${subtotal.toFixed(2)}</span>
+                </div>
+              `;
+                }).join('');
+
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">🛒 Your Cart</h2>
+                  ${rows}
+                  <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-top:20px;">
+                    <span style="font-size:1.6rem; font-weight:700;">Total: $${total.toFixed(2)}</span>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                      <a data-page="shop" class="btn btn-outline">Continue Shopping</a>
+                      <a data-page="checkout" class="btn btn-primary">Proceed to Checkout →</a>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderWishlist() {
+                if (!currentUser) return '<div class="container" style="padding-top:120px;"><h2>Please login</h2></div>';
+                const items = DB.wishlists.filter(w => w.user_id === currentUser.id);
+                if (items.length === 0) return '<div class="container" style="padding-top:120px;"><h2>💔 Wishlist is empty</h2></div>';
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">❤️ Wishlist</h2>
+                  <div class="grid-3">
+                    ${items.map(w => {
+                      const p = findProduct(w.product_id);
+                      return p ? productCard(getProductWithDetails(p.id)) : '';
+                    }).join('')}
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderCheckout() {
+                if (!currentUser) return '<div class="container" style="padding-top:120px;"><h2>Please login to checkout</h2></div>';
+                const cart = getCart(currentUser.id);
+                const items = getCartItems(cart.id);
+                if (items.length === 0) return '<div class="container" style="padding-top:120px;"><h2>Cart is empty</h2></div>';
+                const total = getCartTotal(currentUser.id);
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">📦 Checkout</h2>
+                  <div class="form-glass">
+                    <h3 style="margin-bottom:16px;">Order Summary</h3>
+                    <p style="margin-bottom:8px;">${items.length} items — Total: <strong>$${total.toFixed(2)}</strong></p>
+                    <div class="form-group">
+                      <label>Shipping Address</label>
+                      <input type="text" id="checkoutAddress" placeholder="Street, City, State, ZIP" />
+                    </div>
+                    <div class="form-group">
+                      <label>Payment Method</label>
+                      <select id="checkoutPayment">
+                        <option>💳 Credit Card</option>
+                        <option>🅿️ PayPal</option>
+                        <option>📱 Apple Pay</option>
+                      </select>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; padding:16px;" onclick="placeOrder()">Place Order — $${total.toFixed(2)}</button>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderLogin() {
+                if (currentUser) {
+                    return `<div class="container" style="padding-top:120px;"><h2>You are already logged in as ${currentUser.name}</h2><a data-page="home" class="btn btn-primary mt-2">Go Home</a></div>`;
+                }
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <div class="form-glass">
+                    <h2 class="text-center" style="margin-bottom:24px;">🔐 Welcome Back</h2>
+                    <div class="form-group">
+                      <label>Email</label>
+                      <input type="email" id="loginEmail" value="demo@nexora.com" />
+                    </div>
+                    <div class="form-group">
+                      <label>Password</label>
+                      <input type="password" id="loginPassword" value="demo123" />
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="handleLogin()">Login</button>
+                    <p class="text-center mt-2">Don't have an account? <a data-page="register" style="color:#8ab4f8; cursor:pointer;">Register</a></p>
+                    <p class="text-center text-muted text-sm" style="margin-top:8px;">Admin: mahamirfan198@gmail.com / admin2025</p>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderRegister() {
+                if (currentUser) {
+                    return `<div class="container" style="padding-top:120px;"><h2>You are already logged in</h2><a data-page="home" class="btn btn-primary mt-2">Go Home</a></div>`;
+                }
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <div class="form-glass">
+                    <h2 class="text-center" style="margin-bottom:24px;">📝 Create Account</h2>
+                    <div class="form-group">
+                      <label>Full Name</label>
+                      <input type="text" id="regName" placeholder="Your name" />
+                    </div>
+                    <div class="form-group">
+                      <label>Email</label>
+                      <input type="email" id="regEmail" placeholder="email@example.com" />
+                    </div>
+                    <div class="form-group">
+                      <label>Password</label>
+                      <input type="password" id="regPassword" placeholder="Min 6 characters" />
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="handleRegister()">Create Account</button>
+                    <p class="text-center mt-2">Already have an account? <a data-page="login" style="color:#8ab4f8; cursor:pointer;">Login</a></p>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderAccount() {
+                if (!currentUser) return '<div class="container" style="padding-top:120px;"><h2>Please login</h2></div>';
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">👤 My Account</h2>
+                  <div class="glass-card" style="max-width:500px;">
+                    <p><strong>Name:</strong> ${currentUser.name}</p>
+                    <p><strong>Email:</strong> ${currentUser.email}</p>
+                    <p><strong>Role:</strong> ${currentUser.role === 'admin' ? '⚙️ Administrator' : '👤 Customer'}</p>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:20px;">
+                      <a data-page="orders" class="btn btn-outline">📦 Orders</a>
+                      <a data-page="wishlist" class="btn btn-outline">❤️ Wishlist</a>
+                      ${isAdmin() ? '<a data-page="admin" class="btn btn-primary">⚙️ Admin Dashboard</a>' : ''}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderOrders() {
+                if (!currentUser) return '<div class="container" style="padding-top:120px;"><h2>Please login</h2></div>';
+                const orders = DB.orders.filter(o => o.user_id === currentUser.id);
+                if (orders.length === 0) return '<div class="container" style="padding-top:120px;"><h2>No orders yet</h2></div>';
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">📦 My Orders</h2>
+                  ${orders.map(o => `
+                    <div class="glass-card" style="margin-bottom:16px;">
+                      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; align-items:center;">
+                        <span><strong>Order #${o.id}</strong></span>
+                        <span class="badge" style="background:${o.status === 'delivered' ? 'rgba(42,143,106,0.2)' : 'rgba(59,110,255,0.2)'}; color:${o.status === 'delivered' ? '#4cd9a0' : '#8ab4f8'};">${o.status.toUpperCase()}</span>
+                        <span class="text-muted text-sm">${new Date(o.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p style="margin-top:8px;">Total: <strong>$${o.total?.toFixed(2) || '0.00'}</strong></p>
+                      <div class="text-muted text-sm">
+                        ${DB.order_items.filter(oi => oi.order_id === o.id).map(oi => {
+                          const p = findProduct(oi.product_id);
+                          return p ? `${p.name} × ${oi.quantity}` : '';
+                        }).join(', ')}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </section>
+            `;
+            }
+
+            function renderAbout() {
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">🚀 About NEXORA TECH</h2>
+                  <div class="glass-card" style="max-width:720px;">
+                    <p style="font-size:1.1rem;">NEXORA TECH is a premium technology e‑commerce platform built for the future. We curate the best gadgets, accessories, and innovative products for tech enthusiasts worldwide.</p>
+                    <p class="mt-2"><strong>Our Mission:</strong> Deliver cutting‑edge technology with exceptional customer experience.</p>
+                    <p class="mt-2"><strong>Founded:</strong> 2025</p>
+                    <p><strong>Headquarters:</strong> Silicon Valley, CA</p>
+                    <div style="display:flex; gap:16px; margin-top:20px; flex-wrap:wrap;">
+                      <span class="badge">🎯 100% Authentic</span>
+                      <span class="badge">🛡️ Premium Quality</span>
+                      <span class="badge">📦 Fast Shipping</span>
+                      <span class="badge">💬 24/7 Support</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderContact() {
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">📬 Contact Us</h2>
+                  <div class="form-glass">
+                    <div class="form-group">
+                      <label>Your Name</label>
+                      <input type="text" id="contactName" />
+                    </div>
+                    <div class="form-group">
+                      <label>Email</label>
+                      <input type="email" id="contactEmail" />
+                    </div>
+                    <div class="form-group">
+                      <label>Message</label>
+                      <textarea id="contactMsg" rows="4"></textarea>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="submitContact()">Send Message</button>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            function renderAdmin() {
+                if (!isAdmin()) {
+                    return '<div class="container" style="padding-top:120px;"><h2>⛔ Admin Access Denied</h2><p class="text-muted">You do not have permission to view this page.</p></div>';
+                }
+                const data = handleApi('admin', 'GET');
+                if (data.error) return `<div class="container" style="padding-top:120px;"><h2>Error: ${data.error}</h2></div>`;
+                const { stats, orders, products, users, reviews, contactMessages, lowStock, outOfStock, inventoryLogs } =
+                data;
+
+                return `
+              <section style="padding-top:120px;">
+                <div class="container">
+                  <h2 class="section-title">⚙️ Admin Dashboard</h2>
+
+                  <div class="admin-stats">
+                    <div class="admin-stat"><div class="number">${stats.totalOrders}</div><div class="label">Orders</div></div>
+                    <div class="admin-stat"><div class="number">$${stats.totalRevenue.toFixed(0)}</div><div class="label">Revenue</div></div>
+                    <div class="admin-stat"><div class="number">${stats.totalProducts}</div><div class="label">Products</div></div>
+                    <div class="admin-stat"><div class="number">${stats.totalUsers}</div><div class="label">Users</div></div>
+                    <div class="admin-stat"><div class="number">${stats.lowStock}</div><div class="label">Low Stock</div></div>
+                    <div class="admin-stat"><div class="number">${stats.outOfStock}</div><div class="label">Out of Stock</div></div>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+                    <div class="admin-panel">
+                      <h3 style="margin-bottom:16px;">📦 Recent Orders</h3>
+                      ${orders && orders.length > 0 ? orders.slice(-5).reverse().map(o => `
+                        <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(59,110,255,0.05); flex-wrap:wrap; gap:8px;">
+                          <span><strong>#${o.id}</strong> — ${o.status}</span>
+                          <span>$${o.total?.toFixed(2) || '0.00'}</span>
+                          <select onchange="updateOrderStatus(${o.id}, this.value)" style="padding:4px 12px; border-radius:20px; border:1px solid rgba(59,110,255,0.15); background:rgba(10,12,18,0.6); color:#eef2f6; font-size:0.8rem;">
+                            <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
+                            <option value="processing" ${o.status==='processing'?'selected':''}>Processing</option>
+                            <option value="shipped" ${o.status==='shipped'?'selected':''}>Shipped</option>
+                            <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
+                            <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
+                          </select>
+                        </div>
+                      `).join('') : '<p class="text-muted">No orders yet.</p>'}
+                    </div>
+
+                    <div class="admin-panel">
+                      <h3 style="margin-bottom:16px;">⚠️ Low Stock</h3>
+                      ${lowStock && lowStock.length > 0 ? lowStock.slice(0,6).map(p => `
+                        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(59,110,255,0.05); align-items:center; flex-wrap:wrap; gap:4px;">
+                          <span style="font-size:0.9rem;">${p.name}</span>
+                          <span style="color:${p.stock === 0 ? '#d14a5a' : '#f4b942'}; font-weight:600;">${p.stock} units</span>
+                          <button class="btn btn-outline" style="padding:2px 14px; font-size:0.75rem;" onclick="restoreStock(${p.id})">Restore</button>
+                        </div>
+                      `).join('') : '<p class="text-muted">All stocked up.</p>'}
+                    </div>
+                  </div>
+
+                  <div class="admin-panel mt-4">
+                    <h3 style="margin-bottom:16px;">📊 Products Management</h3>
+                    <div style="max-height:300px; overflow-y:auto;">
+                      <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                        <thead><tr style="border-bottom:2px solid rgba(59,110,255,0.1);">
+                          <th style="text-align:left; padding:8px;">Product</th>
+                          <th style="text-align:right; padding:8px;">Price</th>
+                          <th style="text-align:right; padding:8px;">Stock</th>
+                          <th style="text-align:right; padding:8px;">Actions</th>
+                        </tr></thead>
+                        <tbody>
+                          ${products && products.length > 0 ? products.slice(0,12).map(p => `
+                            <tr style="border-bottom:1px solid rgba(59,110,255,0.05);">
+                              <td style="padding:8px;">${p.name}</td>
+                              <td style="text-align:right; padding:8px;">$${p.price}</td>
+                              <td style="text-align:right; padding:8px; color:${p.stock < 10 ? '#f4b942' : '#eef2f6'};">${p.stock}</td>
+                              <td style="text-align:right; padding:8px;">
+                                <button class="btn btn-outline" style="padding:2px 12px; font-size:0.75rem;" onclick="editProduct(${p.id})">✎</button>
+                                <button class="btn btn-danger" style="padding:2px 12px; font-size:0.75rem;" onclick="deleteProduct(${p.id})">✕</button>
+                              </td>
+                            </tr>
+                          `).join('') : '<tr><td colspan="4" class="text-center">No products found</td></tr>'}
+                        </tbody>
+                      </table>
+                    </div>
+                    <button class="btn btn-primary mt-2" onclick="addProductForm()">+ Add New Product</button>
+                  </div>
+                </div>
+              </section>
+            `;
+            }
+
+            // ---- 3D Product Viewer ----
+            function initProductViewer() {
+                const container = document.getElementById('product3dViewer');
+                if (!container) return;
+
+                while (container.firstChild) container.removeChild(container.firstChild);
+
+                const productId = parseInt(container.dataset.productId);
+                const p = findProduct(productId);
+                if (!p) return;
+
+                const scene3d = new THREE.Scene();
+                scene3d.background = new THREE.Color(0x0a0c12);
+
+                const camera3d = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+                camera3d.position.set(2, 1.5, 4);
+                camera3d.lookAt(0, 0, 0);
+
+                const renderer3d = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer3d.setSize(container.clientWidth, container.clientHeight);
+                renderer3d.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer3d.domElement);
+
+                const amb3d = new THREE.AmbientLight(0x334466, 0.5);
+                scene3d.add(amb3d);
+                const dir3d = new THREE.DirectionalLight(0x6a9aff, 1.5);
+                dir3d.position.set(3, 5, 3);
+                scene3d.add(dir3d);
+                const rim3d = new THREE.DirectionalLight(0x7a4cff, 0.5);
+                rim3d.position.set(-3, 0, 4);
+                scene3d.add(rim3d);
+
+                const group = new THREE.Group();
+                const color = new THREE.Color().setHSL(0.6 + (p.id % 5) * 0.05, 0.7, 0.5);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: color,
+                    metalness: 0.7,
+                    roughness: 0.15,
+                    emissive: color,
+                    emissiveIntensity: 0.05,
+                });
+
+                const shapes = [
+                    () => {
+                        const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 24), mat);
+                        group.add(sphere);
+                        for (let i = 0; i < 3; i++) {
+                            const ring = new THREE.Mesh(
+                                new THREE.TorusGeometry(0.8 + i * 0.1, 0.02, 8, 32),
+                                new THREE.MeshStandardMaterial({ color: 0x3b6eff, emissive: 0x3b6eff,
+                                    emissiveIntensity: 0.2 })
+                            );
+                            ring.rotation.x = Math.PI / 3 + i * 0.3;
+                            ring.rotation.y = i * 0.5;
+                            group.add(ring);
+                        }
+                    },
+                    () => {
+                        const base = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.6), mat);
+                        group.add(base);
+                        for (let i = 0; i < 6; i++) {
+                            const key = new THREE.Mesh(
+                                new THREE.BoxGeometry(0.08, 0.04, 0.08),
+                                new THREE.MeshStandardMaterial({ color: 0x7a4cff, emissive: 0x7a4cff,
+                                    emissiveIntensity: 0.1 })
+                            );
+                            key.position.set(-0.4 + i * 0.16, 0.06, -0.2);
+                            group.add(key);
+                            const key2 = new THREE.Mesh(
+                                new THREE.BoxGeometry(0.08, 0.04, 0.08),
+                                new THREE.MeshStandardMaterial({ color: 0x7a4cff, emissive: 0x7a4cff,
+                                    emissiveIntensity: 0.1 })
+                            );
+                            key2.position.set(-0.4 + i * 0.16, 0.06, 0.2);
+                            group.add(key2);
+                        }
+                    },
+                    () => {
+                        const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 24), mat);
+                        body.scale.set(1, 0.6, 1.2);
+                        group.add(body);
+                        const scroll = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.2, 8),
+                            new THREE.MeshStandardMaterial({ color: 0x4cd9a0, emissive: 0x4cd9a0,
+                                emissiveIntensity: 0.1 })
+                        );
+                        scroll.rotation.x = Math.PI / 2;
+                        scroll.position.set(0, 0.2, 0.15);
+                        group.add(scroll);
+                    },
+                    () => {
+                        const face = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 24), mat);
+                        face.rotation.x = Math.PI / 2;
+                        group.add(face);
+                        const band1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.3),
+                            new THREE.MeshStandardMaterial({ color: 0x3b6eff }));
+                        band1.position.set(0, -0.35, 0);
+                        group.add(band1);
+                        const band2 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.3),
+                            new THREE.MeshStandardMaterial({ color: 0x3b6eff }));
+                        band2.position.set(0, 0.35, 0);
+                        group.add(band2);
+                        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8),
+                            new THREE.MeshStandardMaterial({ color: 0x4cd9a0, emissive: 0x4cd9a0,
+                                emissiveIntensity: 0.3 }));
+                        dot.position.set(0, 0, 0.3);
+                        group.add(dot);
+                    },
+                    () => {
+                        const ssd = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.5), mat);
+                        group.add(ssd);
+                        const label = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.01, 0.3),
+                            new THREE.MeshStandardMaterial({ color: 0x4cd9a0, emissive: 0x4cd9a0,
+                                emissiveIntensity: 0.1 }));
+                        label.position.z = 0.27;
+                        group.add(label);
+                        const connector = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.1),
+                            new THREE.MeshStandardMaterial({ color: 0xf4b942 }));
+                        connector.position.set(0.45, 0, 0);
+                        group.add(connector);
+                    },
+                    () => {
+                        const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 1), mat);
+                        group.add(core);
+                        for (let i = 0; i < 8; i++) {
+                            const spike = new THREE.Mesh(
+                                new THREE.ConeGeometry(0.04, 0.2, 4),
+                                new THREE.MeshStandardMaterial({ color: 0x3b6eff, emissive: 0x3b6eff,
+                                    emissiveIntensity: 0.1 })
+                            );
+                            const angle = (i / 8) * Math.PI * 2;
+                            spike.position.set(Math.cos(angle) * 0.5, Math.sin(angle) * 0.3 + 0.2, 0);
+                            spike.rotation.z = angle;
+                            group.add(spike);
+                        }
+                    }
+                ];
+
+                shapes[(p.category_id - 1) % shapes.length]();
+                group.scale.setScalar(1.2);
+                scene3d.add(group);
+
+                let rotTime = 0;
+                const animate3d = () => {
+                    requestAnimationFrame(animate3d);
+                    rotTime += 0.02;
+                    group.rotation.y += 0.01;
+                    group.rotation.x = Math.sin(rotTime * 0.2) * 0.05;
+                    group.position.y = Math.sin(rotTime * 0.5) * 0.05;
+                    renderer3d.render(scene3d, camera3d);
+                };
+                animate3d();
+
+                const resizeObserver = new ResizeObserver(() => {
+                    const w = container.clientWidth;
+                    const h = container.clientHeight;
+                    camera3d.aspect = w / h;
+                    camera3d.updateProjectionMatrix();
+                    renderer3d.setSize(w, h);
+                });
+                resizeObserver.observe(container);
+
+                container._cleanup = () => {
+                    resizeObserver.disconnect();
+                    renderer3d.dispose();
+                };
+            }
+
+            // ==========================================================
+            //  6. GLOBAL ACTIONS
+            // ==========================================================
+
+            window.navigate = function(page, params) {
+                if (page === 'admin' && !isAdmin()) {
+                    showToast('⛔ Admin access required.');
+                    return;
+                }
+                render(page, params);
+                window.history.pushState({ page, params }, '', '#' + page + (params ? '?' + new URLSearchParams(params)
+                    .toString() : ''));
+                // Close mobile menu
+                document.querySelector('.nav-links')?.classList.remove('open');
+            };
+
+            window.addToCart = async function(productId) {
+                if (!currentUser) { showToast('Please login first.'); return; }
+                const res = await apiCall('cart', 'POST', { product_id: productId, quantity: 1 });
+                if (res.success) {
+                    updateCartBadge();
+                    showToast('✅ Added to cart!');
+                } else {
+                    showToast('❌ ' + (res.error || 'Error adding to cart'));
+                }
+            };
+
+            window.updateCartItem = async function(itemId, qty) {
+                if (qty <= 0) { removeCartItem(itemId); return; }
+                await apiCall('cart/' + itemId, 'PUT', { quantity: qty });
+                render('cart');
+            };
+
+            window.removeCartItem = async function(itemId) {
+                await apiCall('cart/' + itemId, 'DELETE');
+                render('cart');
+            };
+
+            window.toggleWishlist = async function(productId) {
+                if (!currentUser) { showToast('Login first'); return; }
+                const existing = DB.wishlists.find(w => w.user_id === currentUser.id && w.product_id === productId);
+                if (existing) {
+                    await apiCall('wishlist/' + existing.id, 'DELETE');
+                    showToast('💔 Removed from wishlist');
+                } else {
+                    await apiCall('wishlist', 'POST', { product_id: productId });
+                    showToast('❤️ Added to wishlist');
+                }
+                render('product', { id: productId });
+            };
+
+            window.placeOrder = async function() {
+                if (!currentUser) { showToast('Login first'); return; }
+                const address = document.getElementById('checkoutAddress')?.value;
+                if (!address) { showToast('Please enter a shipping address.'); return; }
+                const res = await apiCall('orders', 'POST');
+                if (res.success) {
+                    showToast('🎉 Order placed successfully!');
+                    render('orders');
+                } else {
+                    showToast('❌ ' + (res.error || 'Order failed'));
+                }
+            };
+
+            window.handleLogin = async function() {
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value.trim();
+                if (!email || !password) { showToast('Please fill all fields.'); return; }
+                const res = await apiCall('auth/login', 'POST', { email, password });
+                if (res.success) {
+                    currentUser = res.user;
+                    updateNav();
+                    showToast('👋 Welcome back, ' + currentUser.name + '!');
+                    if (currentUser.role === 'admin') {
+                        render('admin');
+                    } else {
+                        render('home');
+                    }
+                } else {
+                    showToast('❌ ' + (res.error || 'Login failed'));
+                }
+            };
+
+            window.handleRegister = async function() {
+                const name = document.getElementById('regName').value.trim();
+                const email = document.getElementById('regEmail').value.trim();
+                const password = document.getElementById('regPassword').value.trim();
+                if (!name || !email || password.length < 6) {
+                    showToast('Please fill all fields and use at least 6 characters for password.');
+                    return;
+                }
+                const res = await apiCall('auth/register', 'POST', { email, password, name });
+                if (res.success) {
+                    showToast('✅ Registration successful! Please login.');
+                    render('login');
+                } else {
+                    showToast('❌ ' + (res.error || 'Registration failed'));
+                }
+            };
+
+            window.submitReview = async function(productId) {
+                if (!currentUser) { showToast('Login first'); return; }
+                const rating = parseInt(document.getElementById('reviewRating').value);
+                const comment = document.getElementById('reviewComment').value.trim();
+                if (!rating) { showToast('Please select a rating.'); return; }
+                const res = await apiCall('reviews', 'POST', {
+                    product_id: productId,
+                    rating,
+                    comment,
+                    user_name: currentUser.name
+                });
+                if (res.success) {
+                    showToast('✅ Review submitted!');
+                    render('product', { id: productId });
+                }
+            };
+
+            window.submitContact = async function() {
+                const name = document.getElementById('contactName').value.trim();
+                const email = document.getElementById('contactEmail').value.trim();
+                const message = document.getElementById('contactMsg').value.trim();
+                if (!name || !email || !message) { showToast('Please fill all fields.'); return; }
+                const res = await apiCall('contact', 'POST', { name, email, message });
+                if (res.success) {
+                    showToast('✅ Message sent! We\'ll get back to you soon.');
+                    render('contact');
+                }
+            };
+
+            window.updateOrderStatus = async function(orderId, status) {
+                if (!isAdmin()) { showToast('Unauthorized'); return; }
+                const res = await apiCall('orders/' + orderId, 'PUT', { status });
+                if (res.success) render('admin');
+            };
+
+            window.restoreStock = async function(productId) {
+                if (!isAdmin()) { showToast('Unauthorized'); return; }
+                const qty = prompt('Enter quantity to restore:', '5');
+                if (qty === null) return;
+                const res = await apiCall('admin/restore', 'POST', { product_id: productId, quantity: parseInt(qty) || 1 });
+                if (res.success) {
+                    showToast('✅ Stock restored!');
+                    render('admin');
+                }
+            };
+
+            window.deleteProduct = async function(productId) {
+                if (!confirm('Delete this product?')) return;
+                const res = await apiCall('products/' + productId, 'DELETE');
+                if (res.success) {
+                    showToast('✅ Product deleted');
+                    render('admin');
+                }
+            };
+
+            window.addProductForm = function() {
+                const name = prompt('Product name:');
+                if (!name) return;
+                const price = parseFloat(prompt('Price:'));
+                if (isNaN(price)) return;
+                const stock = parseInt(prompt('Stock:')) || 0;
+                const category_id = parseInt(prompt('Category ID (1-6):')) || 1;
+                const p = {
+                    name,
+                    price,
+                    stock,
+                    category_id,
+                    description: prompt('Description:') || 'Premium tech product.',
+                    discount: parseInt(prompt('Discount %:')) || 0,
+                    featured: confirm('Featured?'),
+                    bestseller: confirm('Bestseller?'),
+                    rating: 0,
+                    reviews_count: 0
+                };
+                apiCall('products', 'POST', p).then(() => {
+                    showToast('✅ Product added!');
+                    render('admin');
+                });
+            };
+
+            window.editProduct = async function(productId) {
+                const p = findProduct(productId);
+                if (!p) return;
+                const newPrice = prompt('New price:', p.price);
+                if (newPrice === null) return;
+                const newStock = prompt('New stock:', p.stock);
+                if (newStock === null) return;
+                const updates = {
+                    price: parseFloat(newPrice) || p.price,
+                    stock: parseInt(newStock) || p.stock
+                };
+                await apiCall('products/' + productId, 'PUT', updates);
+                showToast('✅ Product updated!');
+                render('admin');
+            };
+
+            // ---- Toast Notification ----
+            function showToast(message) {
+                const existing = document.querySelector('.toast-notification');
+                if (existing) existing.remove();
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = '0.4s';
+                    setTimeout(() => toast.remove(), 500);
+                }, 3000);
+            }
+
+            // ---- UI Helpers ----
+            function updateNav() {
+                const loginBtn = document.getElementById('loginBtn');
+                const registerBtn = document.getElementById('registerBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const userBadge = document.getElementById('userBadge');
+                if (currentUser) {
+                    loginBtn.style.display = 'none';
+                    registerBtn.style.display = 'none';
+                    logoutBtn.style.display = 'inline';
+                    userBadge.style.display = 'inline';
+                    userBadge.textContent = '👤 ' + currentUser.name;
+                    const navLinks = document.getElementById('navLinks');
+                    let adminLink = navLinks.querySelector('[data-page="admin"]');
+                    if (isAdmin() && !adminLink) {
+                        const a = document.createElement('a');
+                        a.dataset.page = 'admin';
+                        a.textContent = '⚙️ Admin';
+                        a.onclick = (e) => { e.preventDefault();
+                            navigate('admin'); };
+                        navLinks.appendChild(a);
+                    }
+                    if (!isAdmin() && adminLink) adminLink.remove();
+                } else {
+                    loginBtn.style.display = 'inline';
+                    registerBtn.style.display = 'inline';
+                    logoutBtn.style.display = 'none';
+                    userBadge.style.display = 'none';
+                }
+            }
+
+            function updateCartBadge() {
+                const badge = document.getElementById('cartCount');
+                if (currentUser) {
+                    const cart = getCart(currentUser.id);
+                    const items = getCartItems(cart.id);
+                    const count = items.reduce((s, i) => s + i.quantity, 0);
+                    badge.textContent = count;
+                } else {
+                    badge.textContent = '0';
+                }
+            }
+
+            // ---- Event Listeners ----
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('[data-page]');
+                if (link) {
+                    e.preventDefault();
+                    const page = link.dataset.page;
+                    const params = link.dataset.params ? JSON.parse(link.dataset.params) : undefined;
+                    if (page === 'logout') return;
+                    if (page === 'admin' && !isAdmin()) {
+                        showToast('⛔ Admin access required.');
+                        return;
+                    }
+                    navigate(page, params);
+                }
+                if (e.target.id === 'logoutBtn') {
+                    e.preventDefault();
+                    apiCall('auth/logout', 'POST').then(() => {
+                        currentUser = null;
+                        updateNav();
+                        render('home');
+                        showToast('👋 Logged out');
+                    });
+                }
+                if (e.target.id === 'shopFilterBtn') {
+                    const search = document.getElementById('shopSearch').value;
+                    const category = document.getElementById('shopCategory').value;
+                    const sort = document.getElementById('shopSort').value;
+                    navigate('shop', { search, category, sort });
+                }
+            });
+
+            // ---- Chatbot ----
+            document.getElementById('chatToggle').addEventListener('click', function() {
+                document.getElementById('chatWindow').classList.toggle('open');
+            });
+
+            document.getElementById('chatSend').addEventListener('click', async function() {
+                const input = document.getElementById('chatInput');
+                const msg = input.value.trim();
+                if (!msg) return;
+                const messages = document.getElementById('chatMessages');
+                messages.innerHTML += `<div class="msg user">${msg}</div>`;
+                input.value = '';
+                const res = await apiCall('chatbot', 'POST', { message: msg });
+                const reply = res.reply || 'Sorry, I didn\'t understand that.';
+                messages.innerHTML += `<div class="msg bot">${reply}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            document.getElementById('chatInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') document.getElementById('chatSend').click();
+            });
+
+            // ---- Navbar scroll effect ----
+            window.addEventListener('scroll', function() {
+                const nav = document.getElementById('navbar');
+                if (window.scrollY > 50) {
+                    nav.classList.add('scrolled');
+                } else {
+                    nav.classList.remove('scrolled');
+                }
+            });
+
+            // ---- Video background fallback ----
+            const video = document.getElementById('video-bg');
+            video.addEventListener('error', function() {
+                // If video fails, keep the overlay
+                console.log('Video fallback active');
+            });
+
+            // ---- Router ----
+            function router() {
+                const hash = window.location.hash.slice(1);
+                const [page, query] = hash.split('?');
+                const params = query ? Object.fromEntries(new URLSearchParams(query)) : {};
+                if (page) {
+                    if (page === 'admin' && !isAdmin()) {
+                        render('home');
+                        return;
+                    }
+                    render(page, params);
+                } else {
+                    render('home');
+                }
+            }
+
+            window.addEventListener('popstate', router);
+
+            // ---- Init ----
+            console.log('🚀 NEXORA TECH 3D fully loaded!');
+            console.log('📊 Database has ' + DB.products.length + ' products');
+            console.log('👤 Admin: mahamirfan198@gmail.com / admin2025');
+            console.log('👤 Demo: demo@nexora.com / demo123');
+
+            router();
+
+        })();
+    </script>
+
+</body>
+</html>
